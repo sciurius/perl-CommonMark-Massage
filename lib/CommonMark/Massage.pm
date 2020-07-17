@@ -14,12 +14,9 @@ CommonMark::Massage - Manipulate CommonMark AST
 
 =head1 SYNOPSIS
 
-    use CommonMark qw(:node :event);
     use CommonMark::Massage;
 
-    my $parser = CommonMark::Parser->new;
-    $parser->feed("Hello world");
-    my $doc = $parser->finish;
+    my $doc = CommonMark->parse_document("Hello world");
 
     # Apply function to text nodes.
     my $doc->massage ( { NODE_TEXT => sub { ... } } } );
@@ -48,6 +45,8 @@ or EVENT_EXIT (false).
 It is free to do whatever it wants, but caveat emptor.
 
 See L<EXAMPLES> and the example directory for some example routines.
+
+Note: You can also use the numeric value for the node name if you know it.
 
 =cut
 

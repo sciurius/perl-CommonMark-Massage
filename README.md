@@ -4,12 +4,9 @@ Manipulate CommonMark AST.
 
 ## Synopsis
 
-    use CommonMark qw(:node :event);
     use CommonMark::Massage;
 
-    my $parser = CommonMark::Parser->new;
-    $parser->feed("Hello world");
-    my $doc = $parser->finish;
+    my $doc = CommonMark->parse_document"Hello world");
 
     # Apply function to text nodes.
     my $doc->massage ( { NODE_TEXT => sub { ... } } );
