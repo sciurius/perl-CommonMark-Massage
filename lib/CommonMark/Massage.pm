@@ -6,7 +6,7 @@ use warnings;
 use strict;
 use CommonMark qw( :node :event );
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 NAME
 
@@ -21,9 +21,8 @@ CommonMark::Massage - Manipulate CommonMark AST
     $parser->feed("Hello world");
     my $doc = $parser->finish;
 
-    # Apply function to exit event of text nodes.
-    my $doc->massage ( { NODE_TEXT =>
-                         { EVENT_EXIT => sub { ... } } } );
+    # Apply function to text nodes.
+    my $doc->massage ( { NODE_TEXT => sub { ... } } } );
     $doc->render_html;
 
 =head1 DESCRIPTION
@@ -38,42 +37,38 @@ be applied to the result of parsing.
 
 =head2 massage
 
-One argument: a hash ref of node names, each containing a hashref of
-events that point to a subroutine. For example:
+One argument: a hash ref of node names, to a subroutine. For example:
 
-    { NODE_TEXT => { EVENT_EXIT => \&fixit } }
+    { NODE_TEXT => \&fixit }
 
-The subroutine is called with two arguments, the doc tree and the node.
+The subroutine is called with three arguments, the doc tree, the node,
+and a boolean indicating whether the call is upon an EVENT_ENTER (true)
+or EVENT_EXIT (false).
 
 It is free to do whatever it wants, but caveat emptor.
 
-See L<EXAMPLES> for some example routines.
+See L<EXAMPLES> and the example directory for some example routines.
 
 =cut
 
 sub CommonMark::Node::massage {
     my ( $doc, $ctl ) = @_;
 
-    my $fixmap;
-    $fixmap = sub {
-	my $c = $_[0];
+    # Turn mnemonics into values.
+    for ( keys(%$ctl) ) {
+	next if /^\d+$/;	# already numeric
 	no strict 'refs';
-	return { map { my $k = $_;
-		       ( ( /^\d+$/ ? $_ : $_->() ) =>
-			 { map {
-			     ( ( /^\d+$/ ? $_ : $_->() ) => $c->{$k}->{$_} )
-			   } keys(%{$c->{$k}}) }
-		     ) } keys(%$c) };
-    };
-    $ctl = $fixmap->($ctl);
+	$ctl->{$_->()} = delete $ctl->{$_};
+    }
+
     my $iter = $doc->iterator;
 
     while (my ($ev_type, $node) = $iter->next) {
 	my $node_type = $node->get_type;
 
 	if ( $ctl->{$node_type} ) {
-	    next unless my $code = $ctl->{$node_type}->{$ev_type};
-	    $code->( $doc, $node );
+	    next unless my $code = $ctl->{$node_type};
+	    $code->( $doc, $node, $ev_type == EVENT_ENTER );
 	}
     }
 }

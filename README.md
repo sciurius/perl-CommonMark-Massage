@@ -11,9 +11,8 @@ Manipulate CommonMark AST.
     $parser->feed("Hello world");
     my $doc = $parser->finish;
 
-    # Apply function to exit event of text nodes.
-    my $doc->massage ( { NODE_TEXT =>
-                         { EVENT_EXIT => sub { ... } } } );
+    # Apply function to text nodes.
+    my $doc->massage ( { NODE_TEXT => sub { ... } } );
     $doc->render_html;
 
 ## Description
